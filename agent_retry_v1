@@ -1,0 +1,32 @@
+pipeline {
+  options { 
+    retry(count: 3, conditions: [kubernetesAgent()])
+  }
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          restartPolicy: Always
+          containers:
+          - name: alpine
+            image: alpine:latest
+            command:
+            - cat
+            tty: true
+        '''
+    }
+  }
+  stages {
+    stage('Long Build') {
+      steps {
+        echo 'Very very long Build Stage'
+        container('alpine') {
+          sh 'cat /etc/alpine-release'
+          sh 'set +x; for x in 1 2 3 4 5 6; do echo "#$x... "; sleep 50; done; echo 300 seconds'
+        }
+      }  
+    }
+  }
+}
